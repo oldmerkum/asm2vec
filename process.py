@@ -2,7 +2,7 @@ from asm2vec.asm import BasicBlock
 from asm2vec.asm import Function
 from asm2vec.asm import parse_instruction
 
-from asm2vec.model import Asm2Vec
+from asm2vec.model import Asm2Vec,Asm2VecMemento
 
 import numpy as np
 
@@ -13,6 +13,7 @@ import sys
 import argparse
 import time
 from datetime import timedelta
+import json
 
 def peek_line(open_file):
     position = open_file.tell()
@@ -112,6 +113,19 @@ def print_elapsed(start):
     elapsed = timedelta(seconds=(time.time() - start))
     print("time to train was {}".format(str(elapsed)))
 
+def save_model(model, modelname):
+    with open(modelname, 'w') as jsonfile:
+        json.dump(model.memento().serialize(), jsonfile)
+    print("saved model to {}".format(modelname))
+
+def load_saved_model(modelfilename):
+    model = Asm2Vec()
+    with open(modelfilename, 'r') as jsonfile:
+        loaded_data = Asm2VecMemento()
+        loaded_data.populate(json.load(jsonfile))
+        model.set_memento(loaded_data)
+    return model
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("asm_filename", help="assembly file to train from")
@@ -121,14 +135,19 @@ def main():
 
     model = ''
     train_repo = ''
-    
+    json_filename = ''
+
     start = time.time()
     if args.test:
         model, train_repo = test()
+        json_filename = 'test.json'
     else:
         model, train_repo = create_and_train_model(args.asm_filename)
+        json_filename = args.asm_filename + ".json"
 
     print_elapsed(start)
+
+    save_model(model, json_filename)
 
     for tf in train_repo.funcs():
         print('Norm of trained function "{}" = {}'.format(tf.sequential().name(), np.linalg.norm(tf.v)))

@@ -89,12 +89,12 @@ def _serialize_token(token: Token) -> Dict[str, Any]:
     }
 
 
-def _deserialize_token(rep: Dict[bytes, Any]) -> Token:
-    name = rep[b'name'].decode('utf-8')
-    v = np.array(rep[b'v'])
-    v_pred = np.array(rep[b'v_pred'])
-    count = rep[b'count']
-    frequency = rep[b'frequency']
+def _deserialize_token(rep: Dict[str, Any]) -> Token:
+    name = rep['name']
+    v = np.array(rep['v'])
+    v_pred = np.array(rep['v_pred'])
+    count = rep['count']
+    frequency = rep['frequency']
 
     token = Token(VectorizedToken(name, v, v_pred))
     token.count = count
@@ -106,8 +106,8 @@ def serialize_vocabulary(vocab: Dict[str, Token]) -> Dict[str, Any]:
     return dict(zip(vocab.keys(), map(_serialize_token, vocab.values())))
 
 
-def deserialize_vocabulary(rep: Dict[bytes, Any]) -> Dict[str, Token]:
-    return dict(zip(map(lambda b: b.decode('utf-8'), rep.keys()), map(_deserialize_token, rep.values())))
+def deserialize_vocabulary(rep: Dict[str, Any]) -> Dict[str, Token]:
+    return dict(zip(rep.keys(), map(_deserialize_token, rep.values())))
 
 
 def _serialize_sequence(seq: List[asm2vec.asm.Instruction]) -> List[Any]:
@@ -116,7 +116,7 @@ def _serialize_sequence(seq: List[asm2vec.asm.Instruction]) -> List[Any]:
 
 def _deserialize_sequence(rep: List[Any]) -> List[asm2vec.asm.Instruction]:
     return list(map(
-        lambda instr_rep: asm2vec.asm.Instruction(instr_rep[0].decode('utf-8'), instr_rep[1].decode('utf-8')), rep))
+        lambda instr_rep: asm2vec.asm.Instruction(instr_rep[0], instr_rep[1], rep)))
 
 
 def _serialize_vectorized_function(func: VectorizedFunction, include_sequences: bool) -> Dict[str, Any]:
@@ -133,10 +133,10 @@ def _serialize_vectorized_function(func: VectorizedFunction, include_sequences: 
 
 
 def _deserialize_vectorized_function(rep: Dict[bytes, Any]) -> VectorizedFunction:
-    name = rep[b'name'].decode('utf-8')
-    fid = rep[b'id']
-    v = np.array(rep[b'v'])
-    sequences = list(map(_deserialize_sequence, rep.get(b'sequences', [])))
+    name = rep['name']
+    fid = rep['id']
+    v = np.array(rep['v'])
+    sequences = list(map(_deserialize_sequence, rep.get('sequences', [])))
     return VectorizedFunction(SequentialFunction(fid, name, sequences), v)
 
 
@@ -159,7 +159,7 @@ def serialize_function_repo(repo: FunctionRepository, flags: int) -> Dict[str, A
     return data
 
 
-def deserialize_function_repo(rep: Dict[bytes, Any]) -> FunctionRepository:
-    funcs = list(map(_deserialize_vectorized_function, rep.get(b'funcs', [])))
-    vocab = deserialize_vocabulary(rep.get(b'vocab', dict()))
+def deserialize_function_repo(rep: Dict[str, Any]) -> FunctionRepository:
+    funcs = list(map(_deserialize_vectorized_function, rep.get('funcs', [])))
+    vocab = deserialize_vocabulary(rep.get('vocab', dict()))
     return FunctionRepository(funcs, vocab)

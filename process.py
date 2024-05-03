@@ -78,12 +78,10 @@ def test():
     model.train(train_repo)
     spinner.stop()
     print("test training complete")
-    return model, train_repo
+    return model
 
-def create_and_train_model(asm_filename):
-    functions = []
-
-    #TODO setup asking for filename
+def build_manual_cfg(asm_filename):
+    cfg = []
     with open(asm_filename, 'r') as asm_file:
         print(asm_file.readline())
         asm_file.seek(0)
@@ -94,20 +92,35 @@ def create_and_train_model(asm_filename):
         while peek_line(asm_file):
             # assume next line is ";<function_name>"
             function_name = asm_file.readline()[1:]
-            functions.append(generate_function(function_name, asm_file))
+            cfg.append(generate_function(function_name, asm_file))
             progress_bar.update(1)
         progress_bar.close()
         print("Finished processing asm file")
+    return cfg
 
-    spinner = Halo(text="setting up model with functions", spinner='dots')
+def create_and_train_model(asm_filename):
+    cfg = build_manual_cfg(asm_filename)
+    spinner = Halo(text="creating model", spinner='dots')
     spinner.start()
     model = Asm2Vec(d=200)
     spinner.text = 'training model'
-    train_repo = model.make_function_repo(functions)
+    train_repo = model.make_function_repo(cfg)
     model.train(train_repo)
     spinner.stop()
     print("training complete")
-    return model, train_repo
+    return model
+
+def load_and_train_model(model_filename, asm_filename):
+    cfg = build_manual_cfg(asm_filename)
+    spinner = Halo(text="loading model", spinner='dots')
+    spinner.start()
+    model = load_saved_model(model_filename)
+    spinner.text = 'training model'
+    train_repo = model.make_function_repo(cfg)
+    model.train(train_repo)
+    spinner.stop()
+    print('training complete')
+    return model
 
 def print_elapsed(start):
     elapsed = timedelta(seconds=(time.time() - start))
@@ -131,26 +144,33 @@ def main():
     parser.add_argument("asm_filename", help="assembly file to train from")
     parser.add_argument("--test", help="run test on simple asm values",
                         action="store_true")
+    parser.add_argument("--new-model", help="create new model to train",
+                        action="store_true")
+    parser.add_argument("--model-file", help="model to train")
+
     args = parser.parse_args()
 
     model = ''
-    train_repo = ''
     json_filename = ''
 
     start = time.time()
     if args.test:
-        model, train_repo = test()
+        model = test()
         json_filename = 'test.json'
-    else:
-        model, train_repo = create_and_train_model(args.asm_filename)
+    elif args.new_model:
+        model = create_and_train_model(args.asm_filename)
         json_filename = args.asm_filename + ".json"
+    else:
+        model = load_and_train_model(args.model_file, args.asm_filename)
+        json_filename = args.model_file
 
     print_elapsed(start)
 
     save_model(model, json_filename)
-
+"""
     for tf in train_repo.funcs():
         print('Norm of trained function "{}" = {}'.format(tf.sequential().name(), np.linalg.norm(tf.v)))
+"""
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -9,6 +9,9 @@ import asm2vec.internal.training
 import asm2vec.internal.repr
 import asm2vec.internal.util
 
+import json
+
+from halo import Halo
 
 class Asm2VecMemento:
     def __init__(self):
@@ -43,6 +46,7 @@ class Asm2Vec:
         self._vocab = memento.vocab
 
     def make_function_repo(self, funcs: List[asm2vec.asm.Function]) -> asm2vec.repo.FunctionRepository:
+        print('generating function repo')
         return asm2vec.internal.repr.make_function_repo(
             funcs, self._params.d, self._params.num_of_rnd_walks, self._params.jobs)
 
@@ -58,3 +62,20 @@ class Asm2Vec:
         asm2vec.internal.training.estimate(vf, estimate_repo, self._params)
 
         return vf.v
+
+
+def save_model(model, modelname):
+    with open(modelname, 'w') as jsonfile:
+        json.dump(model.memento().serialize(), jsonfile)
+    print("saved model to {}".format(modelname))
+
+def load_model(modelfilename):
+    model = Asm2Vec()
+    print('loading model...')
+    with open(modelfilename, 'r') as jsonfile:
+        loaded_data = Asm2VecMemento()
+        loaded_data.populate(json.load(jsonfile))
+        model.set_memento(loaded_data)
+
+    return model
+

@@ -1,9 +1,12 @@
 import numpy as np
+import os
+import sys
 
+here = os.path.dirname(__file__)
+sys.path.append(os.path.join(here, '..'))
 import asm2vec.asm
 import asm2vec.parse
 import asm2vec.model
-
 
 def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))

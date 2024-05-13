@@ -33,7 +33,7 @@ def main():
     for tf in training_repo.funcs():
         for ef in estimating_repo.funcs():
             sim = cosine_similarity(tf.v, ef.v)
-            if sim > 0.5:
+            if sim > 0.2:
                 print('sim("{}", "{}") = {}'.format(tf.sequential().name(), ef.sequential().name(), sim))
 
 if __name__ == '__main__':

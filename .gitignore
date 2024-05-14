@@ -11,10 +11,12 @@
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+examples/**/*.asm
 
 # Generated files
 .idea/**/contentModel.xml
 *.json
+*.sqlite3
 
 # Sensitive or high-churn files
 .idea/**/dataSources/

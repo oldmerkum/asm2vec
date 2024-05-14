@@ -33,7 +33,7 @@ def generate_block(asm_file):
     # assume next line is instruction
     block = BasicBlock()
     while next_line_is_instruction(asm_file):
-        block.add_instruction(parse_instruction(asm_file.readline()))
+        block.add_instruction(parse_instruction(asm_file.readline().rstrip()))
     if next_line_is_block(asm_file):
         asm_file.readline()
         block.add_successor(generate_block(asm_file))
@@ -43,7 +43,7 @@ def generate_function(function_name, asm_file):
     # assume current_line is function name and next line is "::block"
     # consume the "::block" line
     asm_file.readline()
-    return Function(generate_block(asm_file), function_name)
+    return Function(generate_block(asm_file), function_name.rstrip())
 
 def build_manual_cfg(asm_filename):
     cfg = []
